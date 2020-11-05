@@ -1,7 +1,5 @@
 package tictactoe;
 
-import java.nio.CharBuffer;
-import java.util.Arrays;
 import java.util.stream.IntStream;
 
 class Board {
@@ -15,6 +13,14 @@ class Board {
                 for (int j = 0; j < board.length; j++) {
                     board[i][j] = gameState[cellsIterator.next()];
                 }
+            }
+        }
+    }
+    private Board (char[][] board) {
+        this.board = new char[board.length][board.length];
+        for (int i = 0; i < board.length; i++) {
+            for (int j = 0; j < board.length; j++) {
+                this.board[i][j] = board[i][j];
             }
         }
     }
@@ -88,5 +94,13 @@ class Board {
             }
         }
         return Math.abs(numOs - numXs) > 1 || (playerWins('X') && playerWins('O'));
+    }
+
+    void write(char player, int coordinateX, int coordinateY) {
+            this.board[coordinateX][coordinateY] = player;
+    }
+
+    public boolean isCellOccupied(int coordinateX, int coordinateY) {
+        return this.board[coordinateX][coordinateY] != '_';
     }
 }
