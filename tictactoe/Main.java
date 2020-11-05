@@ -2,40 +2,45 @@ package tictactoe;
 
 import java.util.InputMismatchException;
 import java.util.Scanner;
-import java.util.stream.IntStream;
 
 public class Main {
+
     public static void main(String[] args) {
         Scanner scanner = new Scanner(System.in);
-        System.out.print("Enter cells: ");
-        var input = scanner.nextLine().toCharArray();
-        var ticTacToe = new Board(3, input);
-        ticTacToe.printBoard();
-        do {
+        var dimension = 3;
+        var ticTacToe = new Board(dimension);
+        var boardPrinter = new BoardPrinter(ticTacToe);
+
+        //1. Prints an empty field at the beginning of the game.
+        boardPrinter.printBoard();
+
+        //2. Creates a game loop where the program asks the user to enter the cell coordinates,
+        // analyzes the move for correctness, and shows a field with the changes if everything is ok.
+        while(ticTacToe.isNotFinished()) {
+            int coordinateY;
+            int coordinateX;
+
             System.out.print("Enter the coordinates: ");
             try {
-                var coordinateY = scanner.nextInt() - 1;
-                var coordinateX = 3 - scanner.nextInt();
-
-                if (!areCoordinatesInBound(coordinateX, coordinateY)) {
-                    System.out.println("Coordinates should be from 1 to 3!");
-                }else if (ticTacToe.isCellOccupied(coordinateX, coordinateY)) {
-                    System.out.println("This cell is occupied! Choose another one!");
-                }else {
-                    ticTacToe.write('X', coordinateX, coordinateY);
-                    break;
-                }
+                 coordinateY = scanner.nextInt() - 1;
+                 coordinateX = dimension - scanner.nextInt();
             } catch (InputMismatchException ex) {
                 System.out.println("You should enter numbers!");
                 scanner.nextLine();
+                continue;
             }
-        } while (true);
-        ticTacToe.printBoard();
-    }
+            if (! ticTacToe.areCoordinatesInBound(coordinateX, coordinateY)) {
+                System.out.printf("Coordinates should be from 1 to %d!%n", dimension);
+            } else if (ticTacToe.isCellOccupied(coordinateX, coordinateY)) {
+                System.out.println("This cell is occupied! Choose another one!");
+            } else {
+                ticTacToe.put(coordinateX, coordinateY);
+                boardPrinter.printBoard();
+            }
 
-    private static boolean areCoordinatesInBound(int coordinateX, int coordinateY) {
-        return IntStream.range(0, 3).anyMatch((number) -> number == coordinateX) &&
-                IntStream.range(0,3).anyMatch((number) -> number == coordinateY);
+        }
+        //3. Ends the game when someone wins or when there is a draw
+        boardPrinter.printGameState();
     }
 
 }

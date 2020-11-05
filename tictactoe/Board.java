@@ -1,58 +1,79 @@
 package tictactoe;
 
+import java.nio.CharBuffer;
+import java.util.Arrays;
+import java.util.Iterator;
 import java.util.stream.IntStream;
+import java.util.stream.Stream;
 
 class Board {
-    private char[][] board;
+    private final char[][] board;
+    private GameState gameState = GameState.GAME_NOT_FINISHED;
+    private boolean firstPlayerTurn = true;
 
-    Board(int dimension, char[] gameState) {
+    Board(int dimension) {
         this.board = new char[dimension][dimension];
-        var cellsIterator = IntStream.range(0, gameState.length).iterator();
-        while (cellsIterator.hasNext()) {
-            for (int i = 0; i < board.length; i++) {
-                for (int j = 0; j < board.length; j++) {
-                    board[i][j] = gameState[cellsIterator.next()];
-                }
+        for (int i = 0; i < dimension; i++) {
+            for (int j = 0; j < dimension; j++) {
+                this.board[i][j] = '_';
             }
         }
     }
+
     private Board (char[][] board) {
         this.board = new char[board.length][board.length];
         for (int i = 0; i < board.length; i++) {
-            for (int j = 0; j < board.length; j++) {
-                this.board[i][j] = board[i][j];
-            }
+            System.arraycopy(board[i], 0, this.board[i], 0, board.length);
         }
     }
 
-    void printBoard() {
-        System.out.println("---------");
-        System.out.printf("| %c %c %c |%n", board[0][0], board[0][1], board[0][2]);
-        System.out.printf("| %c %c %c |%n", board[1][0], board[1][1], board[1][2]);
-        System.out.printf("| %c %c %c |%n", board[2][0], board[2][1], board[2][2]);
-        System.out.println("---------");
+    Iterator<Stream<String>> getRows() {
+        return Arrays.stream(board)
+                .map(CharBuffer::wrap)
+                .map(CharBuffer::chars)
+                .map(intStream -> intStream.mapToObj(Character::toString))
+                .iterator();
     }
 
-    GameState getGameState() {
-        GameState gameState;
-        if (gameImpossible()) {
-            gameState = GameState.IMPOSSIBLE;
-        } else if (playerWins('X')) {
-            gameState = GameState.X_WINS;
-        } else if (playerWins('O')) {
-            gameState = GameState.O_WINS;
-        } else if (emptyCells()) {
-            gameState = GameState.GAME_NOT_FINISHED;
-        } else {
-            gameState = GameState.DRAW;
+    void put(int coordinateX, int coordinateY) {
+        var output = simulatePut(coordinateX, coordinateY);
+        if (output != GameState.IMPOSSIBLE) {
+            this.board[coordinateX][coordinateY] = getPlayer();
+            firstPlayerTurn = !firstPlayerTurn;
+            gameState = output;
+        }
+    }
+
+    boolean areCoordinatesInBound(int coordinateX, int coordinateY) {
+        return IntStream.range(0, board.length).anyMatch((number) -> number == coordinateX) &&
+                IntStream.range(0, board.length).anyMatch((number) -> number == coordinateY);
+    }
+
+    int getDimension() {
+        return board.length;
+    }
+
+    private GameState analyzeBoard() {
+        if (isNotFinished() || gameState == GameState.IMPOSSIBLE) {
+            if (gameImpossible()) {
+                gameState = GameState.IMPOSSIBLE;
+            } else if (playerWins('X')) {
+                gameState = GameState.X_WINS;
+            } else if (playerWins('O')) {
+                gameState = GameState.O_WINS;
+            } else if (emptyCells()) {
+                gameState = GameState.GAME_NOT_FINISHED;
+            } else {
+                gameState = GameState.DRAW;
+            }
         }
         return gameState;
     }
 
     private boolean emptyCells() {
-        for (int i = 0; i < board.length; i++) {
-            for (int j = 0; j < board[0].length; j++){
-                if (board[i][j] == '_') {
+        for (char[] chars : board) {
+            for (int j = 0; j < board[0].length; j++) {
+                if (chars[j] == '_') {
                     return true;
                 }
             }
@@ -84,11 +105,11 @@ class Board {
     private boolean gameImpossible() {
         var numOs = 0;
         var numXs = 0;
-        for (int i = 0; i < board.length; i++) {
+        for (char[] chars : board) {
             for (int j = 0; j < board.length; j++) {
-                if ((board[i][j] == 'X')) {
+                if ((chars[j] == 'X')) {
                     numXs++;
-                } else if ((board)[i][j] == 'O'){
+                } else if (chars[j] == 'O') {
                     numOs++;
                 }
             }
@@ -96,11 +117,33 @@ class Board {
         return Math.abs(numOs - numXs) > 1 || (playerWins('X') && playerWins('O'));
     }
 
-    void write(char player, int coordinateX, int coordinateY) {
-            this.board[coordinateX][coordinateY] = player;
+    private GameState simulatePut(int coordinateX, int coordinateY) {
+        var newBoard = new Board (board);
+        try {
+            if (!isCellOccupied(coordinateX, coordinateY)) {
+                newBoard.board[coordinateX][coordinateY] = getPlayer();
+            } else{
+                return GameState.IMPOSSIBLE;
+            }
+        } catch (NullPointerException exception) {
+            return GameState.IMPOSSIBLE;
+        }
+        return newBoard.analyzeBoard();
+    }
+
+    private char getPlayer() {
+        return (firstPlayerTurn) ? 'X' : 'O';
     }
 
     public boolean isCellOccupied(int coordinateX, int coordinateY) {
         return this.board[coordinateX][coordinateY] != '_';
+    }
+
+    public boolean isNotFinished() {
+        return gameState == GameState.GAME_NOT_FINISHED;
+    }
+
+    GameState getGameState() {
+        return gameState;
     }
 }
