@@ -9,29 +9,31 @@ public class CoffeeMachine {
     private CoffeeMaker coffeeMaker = new CoffeeMaker(540, 400, 120, 9);
     private int money = 550;
 
-    public int getMoney() {
-        return money;
+    public String askMoney() {
+        return String.format("$%d of money", money);
     }
-    public int getMilk() {
-        return coffeeMaker.getMilkML();
-    }
-
-    public int getWaterML() {
-        return coffeeMaker.getWaterML();
+    public String askRemainingMilk() {
+        return String.format("%d of milk", coffeeMaker.getMilkML());
     }
 
-    public int getCoffeeBeansG() {
-        return coffeeMaker.getCoffeeBeansG();
+    public String askRemainingWater() {
+        return String.format("%d of water", coffeeMaker.getWaterML());
     }
 
-    public int getCups() {
-        return coffeeMaker.getCups();
+    public String askRemainingCoffeeBeans() {
+        return String.format("%d of coffee beans", coffeeMaker.getCoffeeBeansG());
     }
 
-    void buyCoffee(CoffeeRecipe coffeeRecipe) {
-        if (coffeeMaker.makeCoffee(coffeeRecipe) ){
+    public String askRemainingCups() {
+        return String.format("%d of disposable cups", coffeeMaker.getDisposableCups());
+    }
+
+    String tryBuyCoffee(CoffeeRecipe coffeeRecipe) {
+        var response = coffeeMaker.tryMakeCoffee(coffeeRecipe);
+        if (response == CoffeeMakerResponse.ENOUGH_RESOURCES) {
             money += coffeeRecipe.price();
         }
+        return  response.toString();
     }
 
     private int takeMoney() {
@@ -58,11 +60,13 @@ public class CoffeeMachine {
 
 
     public static void main(String[] args) {
-        printCoffeeMachine();
-        System.out.println("Write action (buy, fill, take):");
-        runAction(STDIN.nextLine());
-        System.out.println();
-        printCoffeeMachine();
+        String action;
+        do{
+            System.out.println("\nWrite action (buy, fill, take, remaining, exit):");
+            action = STDIN.nextLine();
+            System.out.println();
+            runAction(action);
+        }while (!action.equals("exit"));
     }
 
     private static void runAction(String action) {
@@ -75,6 +79,10 @@ public class CoffeeMachine {
                 break;
             case "take":
                 actionTake();
+                break;
+            case "remaining":
+                printCoffeeMachineStats();
+            default:
                 break;
         }
     }
@@ -93,6 +101,7 @@ public class CoffeeMachine {
         var coffeeBeansG = STDIN.nextInt();
         System.out.println("Write how many disposable cups do you want to add:");
         var cups = STDIN.nextInt();
+        STDIN.nextLine();
         COFFEE_MACHINE.fillWater(waterML);
         COFFEE_MACHINE.fillMilk(milkML);
         COFFEE_MACHINE.addCoffeeBeans(coffeeBeansG);
@@ -102,29 +111,31 @@ public class CoffeeMachine {
 
 
     private static void actionBuy() {
-        System.out.println("What do you want to buy? 1 - espresso, 2 - latte, 3 - cappuccino:");
-        var choice = STDIN.nextInt();
+        System.out.println("What do you want to buy? 1 - espresso, 2 - latte, 3 - cappuccino, back - to main menu:");
+        var choice = STDIN.nextLine();
+        System.out.println();
         switch (choice) {
-            case 1:
-                COFFEE_MACHINE.buyCoffee(new Espresso());
+            case "1":
+                System.out.println(COFFEE_MACHINE.tryBuyCoffee(new Espresso()));
                 break;
-            case 2:
-                COFFEE_MACHINE.buyCoffee(new Latte());
+            case "2":
+                System.out.println(COFFEE_MACHINE.tryBuyCoffee(new Latte()));
                 break;
-            case 3:
-                COFFEE_MACHINE.buyCoffee(new Cappucino());
+            case "3":
+                System.out.println(COFFEE_MACHINE.tryBuyCoffee(new Cappucino()));
                 break;
+            case "back":
             default:
                 break;
         }
     }
 
-    private static void printCoffeeMachine() {
+    private static void printCoffeeMachineStats() {
         System.out.println("The coffee machine has:");
-        System.out.printf("%d of water%n", COFFEE_MACHINE.getWaterML());
-        System.out.printf("%d of milk%n", COFFEE_MACHINE.getMilk());
-        System.out.printf("%d of coffee beans%n", COFFEE_MACHINE.getCoffeeBeansG());
-        System.out.printf("%d of disposable cups%n", COFFEE_MACHINE.getCups());
-        System.out.printf("%d of money%n", COFFEE_MACHINE.getMoney());
+        System.out.println(COFFEE_MACHINE.askRemainingWater());
+        System.out.println(COFFEE_MACHINE.askRemainingMilk());
+        System.out.println(COFFEE_MACHINE.askRemainingCoffeeBeans());
+        System.out.println(COFFEE_MACHINE.askRemainingCups());
+        System.out.println(COFFEE_MACHINE.askMoney());
     }
 }

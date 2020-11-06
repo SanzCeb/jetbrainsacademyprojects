@@ -8,26 +8,35 @@ class CoffeeMaker {
     private int milkML;
     private int waterML;
     private int coffeeBeansG;
-    private int cups;
-    public CoffeeMaker(int milkML, int waterML, int coffeeBeansG, int cups) {
+    private int disposableCups;
+    public CoffeeMaker(int milkML, int waterML, int coffeeBeansG, int disposableCups) {
         this.milkML = milkML;
         this.waterML = waterML;
         this.coffeeBeansG = coffeeBeansG;
-        this.cups = cups;
+        this.disposableCups = disposableCups;
     }
 
-    boolean makeCoffee(CoffeeRecipe coffeeRecipe) {
-        var enoughStock = getRemainingCupsOfCoffee(coffeeRecipe) > 0;
-        if (enoughStock) {
+    CoffeeMakerResponse tryMakeCoffee(CoffeeRecipe coffeeRecipe) {
+        CoffeeMakerResponse response;
+        if (getNumOfCupOfCoffees(coffeeRecipe) > 0) {
             fillMilk(-coffeeRecipe.milkML());
             fillWater(-coffeeRecipe.waterML());
             addCoffeBeans(-coffeeRecipe.coffeeBeansG());
             addCups(-1);
+            response = CoffeeMakerResponse.ENOUGH_RESOURCES;
+        } else if (disposableCups == 0){
+            response = CoffeeMakerResponse.NOT_ENOUGH_DISPOSABLE_CUPS;
+        } else if (getNumOfCupsOfCoffeeWithCurrentMilk(coffeeRecipe) == 0 ) {
+            response = CoffeeMakerResponse.NOT_ENOUGH_MILK;
+        } else if (getNumOfCupsOfCoffeeWithCurrentWater(coffeeRecipe) == 0) {
+            response = CoffeeMakerResponse.NOT_ENOUGH_WATER;
+        } else {
+            response = CoffeeMakerResponse.NOT_ENOUGH_COFFEE_BEANS;
         }
-        return enoughStock;
+        return response;
     }
 
-    private int getRemainingCupsOfCoffee(CoffeeRecipe coffeeRecipe) {
+    private int getNumOfCupOfCoffees(CoffeeRecipe coffeeRecipe) {
         return getNumOfCupsOfCoffePerIngredient(coffeeRecipe).min().orElse(0);
     }
 
@@ -35,20 +44,20 @@ class CoffeeMaker {
         return IntStream.of(getNumOfCupsOfCoffeeWithCurrentMilk(coffeeRecipe),
                 getNumOfCupsOfCoffeeWithCurrentWater(coffeeRecipe),
                 getNumOfCupsOfCoffeeWithCurrentCoffeeBeans(coffeeRecipe),
-                cups);
+                disposableCups);
     }
 
-    private int getNumOfCupsOfCoffeeWithCurrentCoffeeBeans(CoffeeRecipe coffeeRecipe) {
+    int getNumOfCupsOfCoffeeWithCurrentCoffeeBeans(CoffeeRecipe coffeeRecipe) {
         return coffeeBeansG / coffeeRecipe.coffeeBeansG();
     }
 
-    private int getNumOfCupsOfCoffeeWithCurrentWater(CoffeeRecipe coffeeRecipe) {
+    int getNumOfCupsOfCoffeeWithCurrentWater(CoffeeRecipe coffeeRecipe) {
         return waterML / coffeeRecipe.waterML();
     }
 
-    private int getNumOfCupsOfCoffeeWithCurrentMilk(CoffeeRecipe coffeeRecipe) {
+    int getNumOfCupsOfCoffeeWithCurrentMilk(CoffeeRecipe coffeeRecipe) {
         var coffeeRecipeMilkML = coffeeRecipe.milkML();
-        return (coffeeRecipeMilkML > 0) ? milkML / coffeeRecipeMilkML : cups;
+        return (coffeeRecipeMilkML > 0) ? milkML / coffeeRecipeMilkML : disposableCups;
     }
 
     public void fillWater(int waterML) {
@@ -64,7 +73,7 @@ class CoffeeMaker {
     }
 
     public void addCups(int cups) {
-        this.cups += cups;
+        this.disposableCups += cups;
     }
 
     public int getMilkML() {
@@ -79,7 +88,7 @@ class CoffeeMaker {
         return coffeeBeansG;
     }
 
-    public int getCups() {
-        return cups;
+    public int getDisposableCups() {
+        return disposableCups;
     }
 }
