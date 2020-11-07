@@ -8,10 +8,10 @@ import java.util.stream.Stream;
 
 class Board {
     private final char[][] board;
-    private GameState gameState = GameState.GAME_NOT_FINISHED;
-    private boolean firstPlayerTurn = true;
+    private GameState gameState;
 
     Board(int dimension) {
+        this.gameState = GameState.X_TURN;
         this.board = new char[dimension][dimension];
         for (int i = 0; i < dimension; i++) {
             for (int j = 0; j < dimension; j++) {
@@ -20,7 +20,8 @@ class Board {
         }
     }
 
-    private Board (char[][] board) {
+    private Board (char[][] board, GameState gameState) {
+        this.gameState = gameState;
         this.board = new char[board.length][board.length];
         for (int i = 0; i < board.length; i++) {
             System.arraycopy(board[i], 0, this.board[i], 0, board.length);
@@ -36,17 +37,16 @@ class Board {
     }
 
     void put(int coordinateX, int coordinateY) {
-        var output = simulatePut(coordinateX, coordinateY);
-        if (output != GameState.IMPOSSIBLE) {
+        var newGameState = simulatePut(coordinateX, coordinateY);
+        if (newGameState != GameState.IMPOSSIBLE) {
             this.board[coordinateX][coordinateY] = getPlayer();
-            firstPlayerTurn = !firstPlayerTurn;
-            gameState = output;
+            gameState = newGameState;
         }
     }
 
     boolean areCoordinatesInBound(int coordinateX, int coordinateY) {
-        return IntStream.range(0, board.length).anyMatch((number) -> number == coordinateX) &&
-                IntStream.range(0, board.length).anyMatch((number) -> number == coordinateY);
+        return IntStream.range(0, board.length).anyMatch(number -> number == coordinateX) &&
+                IntStream.range(0, board.length).anyMatch(number -> number == coordinateY);
     }
 
     int getDimension() {
@@ -54,20 +54,21 @@ class Board {
     }
 
     private GameState analyzeBoard() {
+        GameState output = GameState.IMPOSSIBLE;
         if (isNotFinished() || gameState == GameState.IMPOSSIBLE) {
             if (gameImpossible()) {
-                gameState = GameState.IMPOSSIBLE;
+                output = GameState.IMPOSSIBLE;
             } else if (playerWins('X')) {
-                gameState = GameState.X_WINS;
+                output = GameState.X_WINS;
             } else if (playerWins('O')) {
-                gameState = GameState.O_WINS;
+                output = GameState.O_WINS;
             } else if (emptyCells()) {
-                gameState = GameState.GAME_NOT_FINISHED;
+                output = (gameState == GameState.X_TURN) ? GameState.O_TURN : GameState.X_TURN;
             } else {
-                gameState = GameState.DRAW;
+                output = GameState.DRAW;
             }
         }
-        return gameState;
+        return output;
     }
 
     private boolean emptyCells() {
@@ -89,14 +90,14 @@ class Board {
             var playerWinsRow = true;
             var playerWinsColumn = true;
             for (int j = 0; j < board.length; j++) {
-                playerWinsColumn = playerWinsColumn && (board[j][i] == player);
-                playerWinsRow = playerWinsRow && (board[i][j] == player);
+                playerWinsColumn = playerWinsColumn && board[j][i] == player;
+                playerWinsRow = playerWinsRow && board[i][j] == player;
             }
             if (playerWinsColumn || playerWinsRow) {
                 return true;
             }
-            playerWinsLeftDiagonal = playerWinsLeftDiagonal && (board[i][i] == player);
-            playerWinsRightDiagonal = playerWinsRightDiagonal && (board[i][board.length - i - 1] == player);
+            playerWinsLeftDiagonal = playerWinsLeftDiagonal && board[i][i] == player;
+            playerWinsRightDiagonal = playerWinsRightDiagonal && board[i][board.length - i - 1] == player;
         }
 
         return playerWinsLeftDiagonal || playerWinsRightDiagonal;
@@ -107,18 +108,18 @@ class Board {
         var numXs = 0;
         for (char[] chars : board) {
             for (int j = 0; j < board.length; j++) {
-                if ((chars[j] == 'X')) {
+                if (chars[j] == 'X') {
                     numXs++;
                 } else if (chars[j] == 'O') {
                     numOs++;
                 }
             }
         }
-        return Math.abs(numOs - numXs) > 1 || (playerWins('X') && playerWins('O'));
+        return Math.abs(numOs - numXs) > 1 || playerWins('X') && playerWins('O');
     }
 
     private GameState simulatePut(int coordinateX, int coordinateY) {
-        var newBoard = new Board (board);
+        var newBoard = new Board (board, gameState);
         try {
             if (!isCellOccupied(coordinateX, coordinateY)) {
                 newBoard.board[coordinateX][coordinateY] = getPlayer();
@@ -132,7 +133,7 @@ class Board {
     }
 
     private char getPlayer() {
-        return (firstPlayerTurn) ? 'X' : 'O';
+        return gameState == GameState.X_TURN ? 'X' : 'O';
     }
 
     public boolean isCellOccupied(int coordinateX, int coordinateY) {
@@ -140,7 +141,7 @@ class Board {
     }
 
     public boolean isNotFinished() {
-        return gameState == GameState.GAME_NOT_FINISHED;
+        return gameState == GameState.X_TURN || gameState == GameState.O_TURN;
     }
 
     GameState getGameState() {
