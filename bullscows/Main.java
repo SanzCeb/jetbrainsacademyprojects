@@ -11,13 +11,30 @@ public class Main {
         var scanner = new Scanner(System.in);
 
         System.out.println("Input the length of the secret code:");
-        var secretCodeLength = Integer.parseInt(scanner.nextLine());
+        var secretCodeLengthStr = scanner.nextLine();
+        if (isNotANumber(secretCodeLengthStr)) {
+            System.out.printf("Error: \"%s\" is not a number.%n",secretCodeLengthStr);
+            return;
+        }
+        int secretCodeLength = Integer.parseInt(secretCodeLengthStr);
 
         System.out.println("Input the number of possible symbols in the code:");
-        var secretSymbolsLength = Integer.parseInt(scanner.nextLine());
+        var secretSymbolsLengthStr = scanner.nextLine();
+        if (isNotANumber(secretCodeLengthStr)) {
+            System.out.printf("Error: \"%s\" is not a number.%n",secretCodeLengthStr);
+            return;
+        }
+        int secretSymbolsLength = Integer.parseInt(secretSymbolsLengthStr);
+
 
         if ( secretCodeLength > MAX_LENGTH || secretCodeLength <= 0) {
-            System.out.println("Error: can't generate a secret number with a length of 11 because there aren't enough unique digits.");
+            System.out.printf("Error: can't generate a secret number with a length of %d because there aren't enough unique digits.%n", secretCodeLength);
+        } else if (secretSymbolsLength < 1 ) {
+            System.out.println("Error: minimum number of possible symbols in the code is 1 (0-0).");
+        } else if (secretSymbolsLength > MAX_LENGTH){
+            System.out.println("Error: maximum number of possible symbols in the code is 36 (0-9, a-z).");
+        } else if (secretCodeLength > secretSymbolsLength) {
+            System.out.printf("Error: it's not possible to generate a code with a length of %d with %d unique symbols.%n", secretCodeLength, secretSymbolsLength);
         } else {
             var possibleSymbols = generatePossibleSymbols(secretSymbolsLength);
             var secretCode = secretCodeWithUniqueDigitsAndSymbols(possibleSymbols, secretCodeLength);
@@ -37,6 +54,10 @@ public class Main {
             System.out.println("Congratulations! You guessed the secret code.");
 
         }
+    }
+
+    private static boolean isNotANumber(String secretCodeLengthStr) {
+        return secretCodeLengthStr.chars().filter(i -> '0' <= i && i <= '9').count() != secretCodeLengthStr.length();
     }
 
     private static String generateAsterisks(int secretCodeLength) {
