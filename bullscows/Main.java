@@ -1,5 +1,6 @@
 package bullscows;
 
+import java.util.Random;
 import java.util.Scanner;
 
 public class Main {
@@ -30,14 +31,12 @@ public class Main {
     }
 
     static StringBuilder secretCodeWithUniqueDigits(int secretCodeLength) {
-        var pseudoRandomNumber = new StringBuilder(String.valueOf(System.nanoTime()));
         StringBuilder secretCodeBuilder = new StringBuilder();
+        var randomNumbersGenerator = new Random();
 
-        pseudoRandomNumber.reverse()
-                .chars()
+        randomNumbersGenerator.ints(0, 10)
                 .distinct()
                 .limit(secretCodeLength)
-                .mapToObj(c -> (char) c)
                 .forEach(secretCodeBuilder::append);
 
         return secretCodeBuilder;
