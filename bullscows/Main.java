@@ -2,21 +2,29 @@ package bullscows;
 
 import java.util.Random;
 import java.util.Scanner;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 public class Main {
-
+    final static int MAX_LENGTH = 36;
     public static void main(String[] args) {
         var scanner = new Scanner(System.in);
 
-        System.out.println("Please, enter the secret code's length:");
+        System.out.println("Input the length of the secret code:");
         var secretCodeLength = Integer.parseInt(scanner.nextLine());
 
-        if (secretCodeLength > 10) {
+        System.out.println("Input the number of possible symbols in the code:");
+        var secretSymbolsLength = Integer.parseInt(scanner.nextLine());
+
+        if ( secretCodeLength > MAX_LENGTH || secretCodeLength <= 0) {
             System.out.println("Error: can't generate a secret number with a length of 11 because there aren't enough unique digits.");
         } else {
+            var possibleSymbols = generatePossibleSymbols(secretSymbolsLength);
+            var secretCode = secretCodeWithUniqueDigitsAndSymbols(possibleSymbols, secretCodeLength);
+            var asterisks = generateAsterisks(secretCodeLength);
+            var symbolsRange = generateSymbolsRangeMessage(possibleSymbols);
+            System.out.printf("The secret is prepared: %s %s.%n", asterisks, symbolsRange);
             System.out.println("Okay, let's start a game!");
-            var secretCode = secretCodeWithUniqueDigits(secretCodeLength);
-
             String answer;
             int[] bullsAndCows;
             int turns = 1;
@@ -27,33 +35,63 @@ public class Main {
                 System.out.println(buildGameResponse(bullsAndCows[0], bullsAndCows[1]));
             } while (bullsAndCows[0] != secretCodeLength);
             System.out.println("Congratulations! You guessed the secret code.");
+
         }
     }
 
-    static StringBuilder secretCodeWithUniqueDigits(int secretCodeLength) {
-        StringBuilder secretCodeBuilder = new StringBuilder();
-        var randomNumbersGenerator = new Random();
-
-        randomNumbersGenerator.ints(0, 10)
-                .distinct()
-                .limit(secretCodeLength)
-                .forEach(secretCodeBuilder::append);
-
-        return secretCodeBuilder;
+    private static String generateAsterisks(int secretCodeLength) {
+        return "*".repeat(secretCodeLength);
     }
 
-    public static int[] gradeGuessingAttempt(String userResponse, StringBuilder secretCode) {
+    private static String generateSymbolsRangeMessage(String possibleSymbols) {
+        var possibleSymbolsLength = possibleSymbols.length();
+        var closeRange = Math.min(9, possibleSymbolsLength - 1);
+        var numbersRange = String.format("(0-%d", closeRange);
+        var symbolsRangeMessageBuilder = new StringBuilder(numbersRange);
+
+        if (possibleSymbolsLength > 10) {
+            symbolsRangeMessageBuilder.append(", a");
+            var lastChar = possibleSymbols.charAt(possibleSymbolsLength - 1);
+            if (lastChar > 'a') {
+                symbolsRangeMessageBuilder.append(String.format("-%c", lastChar));
+            }
+        }
+        symbolsRangeMessageBuilder.append(')');
+        return  symbolsRangeMessageBuilder.toString();
+    }
+
+    private static String generatePossibleSymbols(int secretSymbolsLength) {
+        var numDigits = Math.min(10, secretSymbolsLength);
+        var numSymbols = Math.max(0, secretSymbolsLength - numDigits);
+        var possibleDigits = IntStream.range(0,numDigits).map(i -> '0' + i);
+        var possibleLetters = IntStream.range(0,numSymbols).map(i -> 'a' + i);
+        return IntStream.concat(possibleDigits, possibleLetters)
+                .mapToObj(Character::toString)
+                .collect(Collectors.joining());
+    }
+
+    static String secretCodeWithUniqueDigitsAndSymbols(String possibleSymbols, int secretCodeLength) {
+        return new Random()
+                .ints(0, possibleSymbols.length())
+                .distinct()
+                .limit(secretCodeLength)
+                .map(possibleSymbols::charAt)
+                .mapToObj(Character::toString)
+                .collect(Collectors.joining());
+    }
+
+    public static int[] gradeGuessingAttempt(String userResponse, String secretCode) {
         int bulls = 0, cows = 0;
         var secretCodeLength = secretCode.length();
-        var userResponseIterator = userResponse.chars().iterator();
+        var userResponseIterator = userResponse.codePoints().iterator();
 
         for (int i = 0; i < secretCodeLength && userResponseIterator.hasNext(); i++) {
-                var userResponseChar = userResponseIterator.next();
-                if (secretCode.charAt(i) == userResponseChar) {
-                    bulls++;
-                } else if (secretCode.chars().anyMatch(digit -> digit == userResponseChar)) {
-                    cows++;
-                }
+            var userResponseChar = userResponseIterator.next();
+            if (secretCode.charAt(i) == userResponseChar) {
+                bulls++;
+            } else if (secretCode.chars().anyMatch(digit -> digit == userResponseChar)) {
+                cows++;
+            }
         }
 
         return new int[]{bulls, cows};
