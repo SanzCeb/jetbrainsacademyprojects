@@ -6,51 +6,86 @@ public class Main {
 
     public static void main(String[] args) {
         var scanner = new Scanner(System.in);
-        long pseudoRandomNumber = System.nanoTime();
-        var secretCodeLength = scanner.nextInt();
-        StringBuilder sb = new StringBuilder();
+
+        System.out.println("Please, enter the secret code's length:");
+        var secretCodeLength = Integer.parseInt(scanner.nextLine());
 
         if (secretCodeLength > 10) {
             System.out.println("Error: can't generate a secret number with a length of 11 because there aren't enough unique digits.");
         } else {
-            var reversedNumber = sb.append(pseudoRandomNumber).reverse();
-            System.out.printf("The random secret number is %s%n", secretCodeWithUniqueDigits(reversedNumber, secretCodeLength));
+            System.out.println("Okay, let's start a game!");
+            var secretCode = secretCodeWithUniqueDigits(secretCodeLength);
+
+            String answer;
+            int[] bullsAndCows;
+            int turns = 1;
+            do {
+                System.out.printf("Turn %d:%n", turns++);
+                answer = scanner.nextLine();
+                bullsAndCows = gradeGuessingAttempt(answer, secretCode);
+                System.out.println(buildGameResponse(bullsAndCows[0], bullsAndCows[1]));
+            } while (bullsAndCows[0] != secretCodeLength);
+            System.out.println("Congratulations! You guessed the secret code.");
         }
     }
 
-    static StringBuilder secretCodeWithUniqueDigits(StringBuilder reversedNumber, int secretCodeLength) {
+    static StringBuilder secretCodeWithUniqueDigits(int secretCodeLength) {
+        var pseudoRandomNumber = new StringBuilder(String.valueOf(System.nanoTime()));
         StringBuilder secretCodeBuilder = new StringBuilder();
-        for (int i = 0; i < reversedNumber.length() && secretCodeBuilder.length() < secretCodeLength; i++) {
-            var numberI = reversedNumber.charAt(i);
-            if ( !secretCodeBuilder.chars().anyMatch(digit -> digit == numberI)) {
-                secretCodeBuilder.append(numberI);
-            }
-        }
+
+        pseudoRandomNumber.reverse()
+                .chars()
+                .distinct()
+                .limit(secretCodeLength)
+                .mapToObj(c -> (char) c)
+                .forEach(secretCodeBuilder::append);
+
         return secretCodeBuilder;
     }
 
-    public static void bullsAndCows() {
-        var secretCode = new char[]{'9', '3', '0', '5'};
-        var answer = new Scanner(System.in).nextLine();
+    public static int[] gradeGuessingAttempt(String userResponse, StringBuilder secretCode) {
         int bulls = 0, cows = 0;
-        for (int i = 0; i < secretCode.length; i++) {
-            if (secretCode[i] == answer.charAt(i)) {
-                bulls++;
-            } else if (answer.contains(String.valueOf(secretCode[i]))){
-                cows++;
+        var secretCodeLength = secretCode.length();
+        var userResponseIterator = userResponse.chars().iterator();
+
+        for (int i = 0; i < secretCodeLength && userResponseIterator.hasNext(); i++) {
+                var userResponseChar = userResponseIterator.next();
+                if (secretCode.charAt(i) == userResponseChar) {
+                    bulls++;
+                } else if (secretCode.chars().anyMatch(digit -> digit == userResponseChar)) {
+                    cows++;
+                }
+        }
+
+        return new int[]{bulls, cows};
+    }
+
+    public static StringBuilder buildGameResponse(int bulls, int cows){
+        StringBuilder gameResponse = new StringBuilder("Grade: ");
+
+        if (bulls > 0) {
+            gameResponse.append(String.format("%d bulls", bulls));
+            if (bulls == 1) {
+                gameResponse.deleteCharAt(gameResponse.length() - 1);
             }
         }
 
-        if (bulls > 0) {
-            if (cows > 0) {
-                System.out.printf("Grade: %d bull(s) and %d cows(s). The secret code is 9305.", bulls, cows);
-            } else {
-                System.out.printf("Grade: %d bull(s). The secret code is 9305.", bulls);
-            }
-        } else if (cows > 0) {
-            System.out.printf("Grade: %d cows(s). The secret code is 9305.", cows);
-        } else {
-            System.out.printf("Grade: None. The secret code is 9305.");
+        if (bulls > 0 && cows > 0) {
+            gameResponse.append(" and ");
         }
+
+        if (cows > 0) {
+            gameResponse.append(String.format("%d cows", cows));
+            if (cows == 1) {
+                gameResponse.deleteCharAt(gameResponse.length() - 1);
+            }
+        }
+
+        if (bulls == 0 && cows == 0) {
+            gameResponse.append("None.");
+        }
+
+        return gameResponse;
     }
+
 }
