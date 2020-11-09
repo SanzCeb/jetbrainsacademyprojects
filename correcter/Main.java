@@ -4,17 +4,39 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Random;
 import java.util.Scanner;
-import java.util.stream.IntStream;
+import java.util.stream.Collectors;
 
 public class Main {
     public static void main(String[] args) {
         var scanner = new Scanner(System.in);
         var userInput = scanner.nextLine();
-        var tokens = splitUserInput(3, userInput);
-        var tokensWithError = tokens.stream()
-                .map(Main::simulateError);
+        var userInputEncoded = encode(userInput);
+        var userInputEncodedWithErrors = splitUserInput(3, userInputEncoded)
+                .stream().map(Main::simulateError)
+                .collect(Collectors.joining());
+        var userInputDecoded = splitUserInput(3, userInputEncodedWithErrors)
+                .stream().map(Main::decode)
+                .collect(Collectors.joining());
 
-        tokensWithError.forEach(System.out::println);
+        System.out.println(userInput);
+        System.out.println(userInputEncoded);
+        System.out.println(userInputEncodedWithErrors);
+        System.out.println(userInputDecoded);
+
+    }
+
+    private static String decode(String s) {
+        return Character.toString((s.charAt(0) == s.charAt(1)) || (s.charAt(0) == s.charAt(2))
+                ? s.charAt(0) : s.charAt(1));
+    }
+
+    private static String encode(String userInput) {
+        var simbolsTripled = new StringBuilder();
+        for (int i = 0; i < userInput.length(); i++) {
+            var symbolTripled = Character.toString(userInput.charAt(i)).repeat(3);
+            simbolsTripled.append(symbolTripled);
+        }
+        return simbolsTripled.toString();
     }
 
     private static Collection<String> splitUserInput(int tokenLength, String userInput) {
@@ -36,39 +58,17 @@ public class Main {
         if (str.length() == 3) {
 
             var randomPosition = new Random().nextInt(str.length());
-            var randomCharacter = Character.toString(getRandomCharacter());
+            var randomCharacter = Character.toString(CharRandomizer.getRandomChar());
             var replacedCharacter = Character.toString(str.charAt(randomPosition));
 
             while (randomCharacter.equals(replacedCharacter)) {
-                randomCharacter = Character.toString(getRandomCharacter());
+                randomCharacter = Character.toString(CharRandomizer.getRandomChar());
             }
 
             stringWithError = str.replaceFirst(replacedCharacter, randomCharacter);
         }
 
         return stringWithError;
-    }
-
-    private static char getRandomCharacter() {
-        var allCharactersBuilder = IntStream.builder();
-        var lowerCaseLetters = IntStream.rangeClosed('a', 'z');
-        var upperCaseLetters = IntStream.rangeClosed('A', 'Z');
-        var numbers = IntStream.rangeClosed('0', '9');
-
-        allCharactersBuilder.add(' ');
-        numbers.forEach(allCharactersBuilder::add);
-        lowerCaseLetters.forEach(allCharactersBuilder::add);
-        upperCaseLetters.forEach(allCharactersBuilder::add);
-        var allCharacters = allCharactersBuilder.build();
-        var randomPosition = new Random().nextInt(63);
-        var iterator = allCharacters.iterator();
-
-        while (randomPosition > 0){
-            iterator.nextInt();
-            randomPosition--;
-        }
-
-        return (char)iterator.nextInt();
     }
 
 
