@@ -13,11 +13,10 @@ public class UserInputReader {
 
     public byte[] readUserInput() throws IOException {
         var userInputRead = new ByteArrayOutputStream();
-        int currentByte = inputStream.read();
-        while (currentByte != -1) {
-            userInputRead.write(currentByte);
-            currentByte = inputStream.read();
+        if (inputStream.available() > 0) {
+            inputStream.transferTo(userInputRead);
         }
+        inputStream.close();
         return userInputRead.toByteArray();
     }
 }
