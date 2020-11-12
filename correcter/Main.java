@@ -14,46 +14,31 @@ public class Main {
         try{
             switch (mode) {
                 case "encode":
-                    encode(new FileInputStream("send.txt"));
+                    sendStream("send.txt", "encoded.txt", MessageEncoderHamming::encode);
                     break;
                 case "send":
-                    send(new FileInputStream("encoded.txt"));
+                    sendStream("encoded.txt", "received.txt", MessageSender::simulateSend);
                     break;
                 case "decode":
-                    decode(new FileInputStream("received.txt"));
+                    sendStream("received.txt", "decoded.txt", MessageDecoderHamming::decode);
                     break;
                 default:
             }
-        }catch (IOException exception) {
+        } catch (IOException exception) {
             System.out.println(exception.toString());
             System.exit(-1);
         }
         
     }
 
-    private static void decode(FileInputStream inputStream) throws IOException {
-        try (var outputStream = new FileOutputStream("decoded.txt")){
-            sendStream(inputStream, outputStream, MessageDecoder::decode);
-        }
-    }
+    private static void sendStream (String from, String to, Function<byte[], byte[]> transform) throws IOException {
+        var inputStream = new FileInputStream(from);
+        var outputStream = new FileOutputStream(to);
+        var inputBytes = inputStream.readAllBytes();
 
-    private static void send(FileInputStream inputStream) throws IOException {
-        try (var outputStream = new FileOutputStream("received.txt")){
-            sendStream(inputStream, outputStream, MessageSender::simulateSend);
-        }
-    }
+        inputStream.close();
+        outputStream.write(transform.apply(inputBytes));
+        outputStream.close();
 
-    private static void encode(FileInputStream inputStream) throws IOException {
-        try (var outputStream = new FileOutputStream("encoded.txt")){
-            sendStream(inputStream, outputStream, MessageEncoder::encode);
-        }
-    }
-
-    private static void sendStream (FileInputStream from, FileOutputStream to, Function<byte[], byte[]> transform) throws IOException {
-        var inputReader = new UserInputReader(from);
-        var userInput = inputReader.readUserInput();
-        var output = transform.apply(userInput);
-        to.write(output);
-        to.close();
     }
 }

@@ -1,21 +1,22 @@
 package correcter;
 
-import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 
 public class MessageDecoder {
 
     public static byte[] decode(byte[] userInput){
-        var outputReader = new ByteArrayInputStream(userInput);
         var outputWriter = new ByteArrayOutputStream();
         byte [] buffer = {0, 5};
-        while (outputReader.available() > 0) {
-            var decodedByte = decodeByte(outputReader.read());
+
+        for (var userInputByte : userInput) {
+            var decodedByte = decodeByte(userInputByte);
             writeDecodedByte(decodedByte, outputWriter, buffer);
         }
+
         if (buffer[1] < 0) {
             outputWriter.write(buffer[0]);
         }
+
         return outputWriter.toByteArray();
     }
 
