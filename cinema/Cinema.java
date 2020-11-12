@@ -50,7 +50,7 @@ public class Cinema {
 
         return String.format(" %s%n%s", columns, rows);
     }
-    
+
     private boolean isFrontHalfSeat(int rowNumberSeat, int numberSeat) {
         return numbOfSeatsPerRow * (rowNumberSeat - 1) +  numberSeat <= this.numbOfFrontHalfSeats;
     }
@@ -81,25 +81,55 @@ public class Cinema {
 
     public static void main(String[] args) {
         var scanner = new Scanner(System.in);
-        int numberOfRows;
-        int numberOfSeats;
-        int rowNumberSeat;
-        int numberSeat;
-        Cinema cinema;
 
         System.out.println("Enter the number of rows:");
-        numberOfRows = Integer.parseInt(scanner.nextLine());
-        System.out.println("\nEnter the number of seats in each row:");
-        numberOfSeats = Integer.parseInt(scanner.nextLine());
-        cinema = new Cinema(numberOfRows, numberOfSeats);
-        System.out.printf("%nCinema:%n%s%n", cinema);
-        System.out.println("Enter a row number:");
-        rowNumberSeat = Integer.parseInt(scanner.nextLine());
-        System.out.println("Enter a seat number in that row:");
-        numberSeat = Integer.parseInt(scanner.nextLine());
-        System.out.printf("%nTicket price: $%d%n", cinema.buySeat(rowNumberSeat, numberSeat));
-        System.out.printf("%nCinema:%n%s%n", cinema);
+        printUserSymbol();
+        var numberOfRows = Integer.parseInt(scanner.nextLine());
 
+        System.out.println("Enter the number of seats in each row:");
+        printUserSymbol();
+        var numberOfSeats = Integer.parseInt(scanner.nextLine());
+
+        var cinema = new Cinema(numberOfRows, numberOfSeats);
+        int actionNumber;
+        do {
+
+            System.out.println("1. Show the seats");
+            System.out.println("2. Buy a ticket");
+            System.out.println("0. Exit");
+            printUserSymbol();
+            actionNumber = Integer.parseInt(scanner.nextLine());
+            switch (actionNumber) {
+                case 1:
+                     showSeats(cinema);
+                    break;
+                case 2:
+                    buyTicket(cinema);
+                    break;
+                default:
+                    break;
+            }
+        } while (actionNumber != 0);
+
+    }
+
+    private static void buyTicket(Cinema cinema) {
+        var scanner = new Scanner(System.in);
+        System.out.println("Enter a row number:");
+        printUserSymbol();
+        var rowNumberSeat = Integer.parseInt(scanner.nextLine());
+        System.out.println("Enter a seat number in that row:");
+        printUserSymbol();
+        var numberSeat = Integer.parseInt(scanner.nextLine());
+        System.out.printf("%nTicket price: $%d%n%n", cinema.buySeat(rowNumberSeat, numberSeat));
+    }
+
+    private static void showSeats(Cinema cinema) {
+        System.out.printf("%nCinema:%n%s%n", cinema);
+    }
+
+    private static void printUserSymbol() {
+        System.out.print("> ");
     }
 
 }
